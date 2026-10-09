@@ -1,0 +1,81 @@
+ // Простая оценка ценности фигур
+var pieceValues = {
+    p: 10,
+    n: 30,
+    b: 30,
+    r: 50,
+    q: 90,
+    k: 900
+};
+
+// Функция оценки доски
+function evaluateBoard(board) {
+    let totalEvaluation = 0;
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            totalEvaluation = totalEvaluation + getPieceValue(board[i][j]);
+        }
+    }
+    return totalEvaluation;
+}
+
+function getPieceValue(piece) {
+    if (piece === null) {
+        return 0;
+    }
+    var value = pieceValues[piece.type];
+    return piece.color === 'w' ? value : -value;
+}
+
+// Алгоритм Minimax с Alpha-Beta отсечением
+function minimax(game, depth, alpha, beta, isMaximizingPlayer) {
+    if (depth === 0 || game.isGameOver()) {
+        return -evaluateBoard(game.board());
+    }
+
+    var newGameMoves = game.moves();
+
+    if (isMaximizingPlayer) {
+        let maxEval = -Infinity;
+        for (let i = 0; i < newGameMoves.length; i++) {
+            game.move(newGameMoves[i]);
+            let evaluation = minimax(game, depth - 1, alpha, beta, false);
+            game.undo();
+            maxEval = Math.max(maxEval, evaluation);
+            alpha = Math.max(alpha, evaluation);
+            if (beta <= alpha) break;
+        }
+        return maxEval;
+    } else {
+        let minEval = Infinity;
+        for (let i = 0; i < newGameMoves.length; i++) {
+            game.move(newGameMoves[i]);
+            let evaluation = minimax(game, depth - 1, alpha, beta, true);
+            game.undo();
+            minEval = Math.min(minEval, evaluation);
+            beta = Math.min(beta, evaluation);
+            if (beta <= alpha) break;
+        }
+        return minEval;
+    }
+}
+
+// Поиск лучшего хода для компьютера
+function calculateBestMove(game) {
+    var possibleMoves = game.moves();
+    var bestMove = null;
+    var bestValue = -Infinity;
+    var depth = 3; // Глубина поиска (выше = умнее, но медленнее)
+
+    for (let i = 0; i < possibleMoves.length; i++) {
+        var move = possibleMoves[i];
+        game.move(move);
+        var boardValue = minimax(game, depth - 1, -Infinity, Infinity, false);
+        game.undo();
+        if (boardValue > bestValue) {
+            bestValue = boardValue;
+            bestMove = move;
+        }
+    }
+    return bestMove;
+}
